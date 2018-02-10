@@ -346,6 +346,9 @@ static int json_string(void *ctx, const unsigned char *val, size_t len) {
                 json_node->type = CT_VDOCKAREA;
             else
                 LOG("Unhandled \"type\": %s\n", buf);
+
+            if (json_node->type == CT_HDOCKAREA || json_node->type == CT_VDOCKAREA)
+                json_node->is_docked = true;
             free(buf);
         } else if (strcasecmp(last_key, "layout") == 0) {
             char *buf = NULL;
