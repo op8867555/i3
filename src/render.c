@@ -392,8 +392,8 @@ static void render_output(Con *con) {
     }
 
     if (top_dock) {
-        top_dock->rect.x = 0;
-        top_dock->rect.y = 0;
+        top_dock->rect.x = con->rect.x;
+        top_dock->rect.y = con->rect.y;
         top_dock->rect.width = con->rect.width;
 
         x_raise_con(top_dock);
@@ -401,8 +401,8 @@ static void render_output(Con *con) {
     }
 
     if (left_dock) {
-        left_dock->rect.x = 0;
-        left_dock->rect.y = 0;
+        left_dock->rect.x = con->rect.x;
+        left_dock->rect.y = con->rect.y;
         left_dock->rect.height = con->rect.height;
 
         x_raise_con(left_dock);
@@ -410,8 +410,8 @@ static void render_output(Con *con) {
     }
 
     if (right_dock) {
-        right_dock->rect.x = con->rect.width - right_dock->rect.width;
-        right_dock->rect.y = 0;
+        right_dock->rect.x = con->rect.x + con->rect.width - right_dock->rect.width;
+        right_dock->rect.y = con->rect.y;
         right_dock->rect.height = con->rect.height;
 
         x_raise_con(right_dock);
@@ -531,6 +531,8 @@ static void render_con_hdockarea(Con *con, Con *child, render_params *p) {
     child->deco_rect.y = 0;
     child->deco_rect.width = 0;
     child->deco_rect.height = 0;
+
+    p->y += child->rect.height;
 }
 
 static void render_con_vdockarea(Con *con, Con *child, render_params *p) {
@@ -545,4 +547,6 @@ static void render_con_vdockarea(Con *con, Con *child, render_params *p) {
     child->deco_rect.y = 0;
     child->deco_rect.width = 0;
     child->deco_rect.height = 0;
+
+    p->x += child->rect.width;
 }
