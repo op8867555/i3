@@ -383,8 +383,8 @@ static void render_output(Con *con) {
     }
 
     if (bottom_dock) {
-        bottom_dock->rect.x = 0;
-        bottom_dock->rect.y = con->rect.height - bottom_dock->rect.height;
+        bottom_dock->rect.x = con->rect.x;
+        bottom_dock->rect.y = height + y;
         bottom_dock->rect.width = con->rect.width;
 
         x_raise_con(bottom_dock);
@@ -410,7 +410,7 @@ static void render_output(Con *con) {
     }
 
     if (right_dock) {
-        right_dock->rect.x = con->rect.x + con->rect.width - right_dock->rect.width;
+        right_dock->rect.x = x + width;
         right_dock->rect.y = con->rect.y;
         right_dock->rect.height = con->rect.height;
 

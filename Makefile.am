@@ -490,6 +490,7 @@ i3_SOURCES = \
 	include/config_parser.h \
 	include/con.h \
 	include/data.h \
+	include/dock.h \
 	include/display_version.h \
 	include/ewmh.h \
 	include/fake_outputs.h \
@@ -534,6 +535,7 @@ i3_SOURCES = \
 	src/config.c \
 	src/config_directives.c \
 	src/config_parser.c \
+	src/dock.c \
 	src/display_version.c \
 	src/ewmh.c \
 	src/fake_outputs.c \

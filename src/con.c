@@ -1372,7 +1372,7 @@ orientation_t con_orientation(Con *con) {
         case L_OUTPUT:
             DLOG("con_orientation() called on dockarea/output (%d) container %p\n", con->layout, con);
             assert(false);
-            return VERT;
+            return HORIZ;
 
         case L_VDOCKAREA:
             return VERT;

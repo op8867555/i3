@@ -593,13 +593,20 @@ sub get_dock_clients {
     for my $output (@outputs) {
         if (!defined($which)) {
             @docked = (@docked, map { @{$_->{nodes}} }
-                                grep { $_->{type} eq 'dockarea' }
+                                grep { ($_->{type} eq 'dockarea') or ($_->{type} eq 'vdockarea')}
                                 @{$output->{nodes}});
         } elsif ($which eq 'top') {
             my $first = first { $_->{type} eq 'dockarea' } @{$output->{nodes}};
             @docked = (@docked, @{$first->{nodes}}) if defined($first);
         } elsif ($which eq 'bottom') {
             my @matching = grep { $_->{type} eq 'dockarea' } @{$output->{nodes}};
+            my $last = $matching[-1];
+            @docked = (@docked, @{$last->{nodes}}) if defined($last);
+        } elsif ($which eq 'left') {
+            my $first = first { $_->{type} eq 'vdockarea' } @{$output->{nodes}};
+            @docked = (@docked, @{$first->{nodes}}) if defined($first);
+        } elsif ($which eq 'right') {
+            my @matching = grep { $_->{type} eq 'vdockarea' } @{$output->{nodes}};
             my $last = $matching[-1];
             @docked = (@docked, @{$last->{nodes}}) if defined($last);
         }

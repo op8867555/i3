@@ -1372,47 +1372,7 @@ static bool handle_strut_partial_change(void *data, xcb_connection_t *conn, uint
         search_at = output;
     }
 
-    /* find out the desired position of this dock window */
-    if (abs(con->window->reserved.bottom - con->window->reserved.top) >
-        abs(con->window->reserved.right - con->window->reserved.left)) { /* handle horizontal dock window */
-        if (con->window->reserved.top > 0 && con->window->reserved.bottom == 0) {
-            DLOG("Top dock client\n");
-            con->window->dock = W_DOCK_TOP;
-        } else if (con->window->reserved.top == 0 && con->window->reserved.bottom > 0) {
-            DLOG("Bottom dock client\n");
-            con->window->dock = W_DOCK_BOTTOM;
-        } else {
-            DLOG("Ignoring invalid reserved edges (_NET_WM_STRUT_PARTIAL), using position as fallback:\n");
-            if (con->geometry.y < (int16_t)(search_at->rect.height / 2)) {
-                DLOG("con->geometry.y = %d < rect.height / 2 = %d, it is a top dock client\n",
-                     con->geometry.y, (search_at->rect.height / 2));
-                con->window->dock = W_DOCK_TOP;
-            } else {
-                DLOG("con->geometry.y = %d >= rect.height / 2 = %d, it is a bottom dock client\n",
-                     con->geometry.y, (search_at->rect.height / 2));
-                con->window->dock = W_DOCK_BOTTOM;
-            }
-        }
-    } else { /* handle vertial dock window */
-        if (con->window->reserved.left > 0 && con->window->reserved.right == 0) {
-            DLOG("Left dock client\n");
-            con->window->dock = W_DOCK_LEFT;
-        } else if (con->window->reserved.left == 0 && con->window->reserved.right > 0) {
-            DLOG("Right dock client\n");
-            con->window->dock = W_DOCK_RIGHT;
-        } else {
-            DLOG("Ignoring invalid reserved edges (_NET_WM_STRUT_PARTIAL), using position as fallback:\n");
-            if (con->geometry.x < (int16_t)(search_at->rect.width / 2)) {
-                DLOG("con->geometry.x = %d < rect.width / 2 = %d, it is a left dock client\n",
-                     con->geometry.x, (search_at->rect.width / 2));
-                con->window->dock = W_DOCK_LEFT;
-            } else {
-                DLOG("con->geometry.x = %d >= rect.width / 2 = %d, it is a right dock client\n",
-                     con->geometry.x, (search_at->rect.width / 2));
-                con->window->dock = W_DOCK_RIGHT;
-            }
-        }
-    }
+    update_dock_type(con->window, con->geometry, search_at->rect);
 
     /* find the dockarea */
     Con *dockarea = con_for_window(search_at, con->window, NULL);

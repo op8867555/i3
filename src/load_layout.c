@@ -360,7 +360,7 @@ static int json_string(void *ctx, const unsigned char *val, size_t len) {
                 json_node->layout = L_STACKED;
             else if (strcasecmp(buf, "tabbed") == 0)
                 json_node->layout = L_TABBED;
-            else if (strcasecmp(buf, "hdockarea") == 0)
+            else if (strcasecmp(buf, "dockarea") == 0)
                 json_node->layout = L_HDOCKAREA;
             else if (strcasecmp(buf, "vdockarea") == 0)
                 json_node->layout = L_VDOCKAREA;
