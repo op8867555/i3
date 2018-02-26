@@ -382,56 +382,36 @@ static void render_output(Con *con) {
         }
     }
 
-    if (bottom_dock) {
-        bottom_dock->rect.x = con->rect.x;
-        bottom_dock->rect.y = height + y;
-        bottom_dock->rect.width = con->rect.width;
-
-        x_raise_con(bottom_dock);
-        render_con(bottom_dock, false);
-    }
-
-    if (top_dock) {
-        top_dock->rect.x = con->rect.x;
-        top_dock->rect.y = con->rect.y;
-        top_dock->rect.width = con->rect.width;
-
-        x_raise_con(top_dock);
-        render_con(top_dock, false);
-    }
-
-    if (left_dock) {
-        left_dock->rect.x = con->rect.x;
-        left_dock->rect.y = con->rect.y;
-        left_dock->rect.height = con->rect.height;
-
-        x_raise_con(left_dock);
-        render_con(left_dock, false);
-    }
-
-    if (right_dock) {
-        right_dock->rect.x = x + width;
-        right_dock->rect.y = con->rect.y;
-        right_dock->rect.height = con->rect.height;
-
-        x_raise_con(right_dock);
-        render_con(right_dock, false);
-    }
-
-    if (content) {
-        content->rect.x = x;
-        content->rect.y = y;
-        content->rect.width = width;
-        content->rect.height = height;
-
-        x_raise_con(content);
-        render_con(content, false);
-    }
-
     /* Second pass: Set the widths/heights */
     TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
+
+        if (child == bottom_dock) {
+            child->rect.x = con->rect.x;
+            child->rect.y = height + y;
+            child->rect.width = con->rect.width;
+        } else if (child == top_dock) {
+            child->rect.x = con->rect.x;
+            child->rect.y = con->rect.y;
+            child->rect.width = con->rect.width;
+        } else if (child == left_dock) {
+            child->rect.x = con->rect.x;
+            child->rect.y = con->rect.y;
+            child->rect.height = con->rect.height;
+        } else if (child == right_dock) {
+            child->rect.x = x + width;
+            child->rect.y = con->rect.y;
+            child->rect.height = con->rect.height;
+        } else if (child == content) {
+            child->rect.x = x;
+            child->rect.y = y;
+            child->rect.width = width;
+            child->rect.height = height;
+        }
+
         DLOG("child at %s (%d, %d) with (%d x %d)\n",
-             child->name, child->rect.x, child->rect.y, child->rect.width, child->rect.height);
+                child->name, child->rect.x, child->rect.y, child->rect.width, child->rect.height);
+        x_raise_con(child);
+        render_con(child, false);
     }
 }
 
