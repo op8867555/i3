@@ -374,10 +374,17 @@ static void handle_configure_request(xcb_configure_request_event_t *event) {
     /* Dock windows can be reconfigured in their height and moved to another output. */
     if (con->parent && con->parent->is_docked) {
         DLOG("Reconfiguring dock window (con = %p).\n", con);
-        if (event->value_mask & XCB_CONFIG_WINDOW_HEIGHT) {
-            DLOG("Dock client wants to change height to %d, we can do that.\n", event->height);
+        if (con->parent->type == CT_HDOCKAREA &&
+                (event->value_mask & XCB_CONFIG_WINDOW_HEIGHT)) {
+            DLOG("Horizontal dock client wants to change height to %d, we can do that.\n", event->height);
 
             con->geometry.height = event->height;
+            tree_render();
+        } else if (con->parent->type == CT_VDOCKAREA &&
+                    (event->value_mask & XCB_CONFIG_WINDOW_WIDTH)) {
+            DLOG("Vertical dock client wants to change width to %d, we can do that.\n", event->width);
+
+            con->geometry.width = event->width;
             tree_render();
         }
 
