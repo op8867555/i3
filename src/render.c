@@ -360,13 +360,13 @@ static void render_output(Con *con) {
         if (child->type == CT_HDOCKAREA) {
             child->rect.height = 0;
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
-                child->rect.height += dockchild->geometry.height;
+                child->rect.height = MAX(child->rect.height, dockchild->geometry.height);
             }
         } else if (child->type == CT_VDOCKAREA) {
             child->rect.width = 0;
 
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
-                child->rect.width += dockchild->geometry.width;
+                child->rect.width = MAX(child->rect.width, dockchild->geometry.width);
             }
         }
     }
@@ -496,10 +496,7 @@ static void render_con_tabbed(Con *con, Con *child, render_params *p, int i) {
 static void render_con_hdockarea(Con *con, Con *child, render_params *p) {
     assert(con->layout == L_HDOCKAREA);
 
-    child->rect.x = p->x;
-    child->rect.y = p->y;
-    child->rect.width = p->rect.width;
-    child->rect.height = child->geometry.height;
+    child->rect = child->geometry;
 
     child->deco_rect.x = 0;
     child->deco_rect.y = 0;
@@ -512,10 +509,7 @@ static void render_con_hdockarea(Con *con, Con *child, render_params *p) {
 static void render_con_vdockarea(Con *con, Con *child, render_params *p) {
     assert(con->layout == L_VDOCKAREA);
 
-    child->rect.x = p->x;
-    child->rect.y = p->y;
-    child->rect.width = child->geometry.width;
-    child->rect.height = p->rect.height;
+    child->rect = child->geometry;
 
     child->deco_rect.x = 0;
     child->deco_rect.y = 0;

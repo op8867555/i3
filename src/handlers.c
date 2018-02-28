@@ -371,7 +371,7 @@ static void handle_configure_request(xcb_configure_request_event_t *event) {
         return;
     }
 
-    /* Dock windows can be reconfigured in their height and moved to another output. */
+    /* Dock windows can be reconfigured in their height/width and moved to another output. */
     if (con->parent && con->parent->is_docked) {
         DLOG("Reconfiguring dock window (con = %p).\n", con);
         if (con->parent->type == CT_HDOCKAREA &&
