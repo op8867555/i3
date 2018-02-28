@@ -298,14 +298,14 @@ static void render_root(Con *con, Con *fullscreen) {
 static void render_output(Con *con) {
     Con *child, *dockchild;
 
-    int x = con->rect.x;
-    int y = con->rect.y;
-    int height = con->rect.height;
-    int width = con->rect.width;
-
     /* Find the content container and ensure that there is exactly one. Also
-     * check for any non-CT_DOCKAREA clients. */
+     * check for any non-CT_DOCKAREA clients. And find all the dock containers. */
     Con *content = NULL;
+    Con *left_dock = NULL;
+    Con *right_dock = NULL;
+    Con *bottom_dock = NULL;
+    Con *top_dock = NULL;
+
     TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
         if (child->type == CT_CON) {
             if (content != NULL) {
@@ -313,6 +313,20 @@ static void render_output(Con *con) {
                 assert(false);
             }
             content = child;
+        } else if (child->type == CT_HDOCKAREA) {
+            if (strcmp(child->name, "bottomdock") == 0) {
+                bottom_dock = child;
+            }
+            if (strcmp(child->name, "topdock") == 0) {
+                top_dock = child;
+            }
+        } else if (child->type == CT_VDOCKAREA) {
+            if (strcmp(child->name, "leftdock") == 0) {
+                left_dock = child;
+            }
+            if (strcmp(child->name, "rightdock") == 0) {
+                right_dock = child;
+            }
         } else if (!child->is_docked ) {
             DLOG("Child %p of type %d is inside the OUTPUT con\n", child, child->type);
             assert(false);
@@ -340,54 +354,34 @@ static void render_output(Con *con) {
         return;
     }
 
-    /* First pass: determine the height of all CT_DOCKAREAs (the sum of their
-     * children) and figure out how many pixels we have left for the rest */
-    Con *left_dock = NULL;
-    Con *right_dock = NULL;
-    Con *bottom_dock = NULL;
-    Con *top_dock = NULL;
-
+    /* First pass: determine the height/weight of all CT_DOCKAREAs (the sum of
+     * their children) and figure out how many pixels we have left for the rest */
     TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
         if (child->type == CT_HDOCKAREA) {
             child->rect.height = 0;
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
                 child->rect.height += dockchild->geometry.height;
             }
-            if (strcmp(child->name, "bottomdock") == 0) {
-                bottom_dock = child;
-            }
-            if (strcmp(child->name, "topdock") == 0) {
-                y += child->rect.height;
-                top_dock = child;
-            }
-
-            height -= child->rect.height;
-
         } else if (child->type == CT_VDOCKAREA) {
             child->rect.width = 0;
 
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
                 child->rect.width += dockchild->geometry.width;
             }
-
-            if (strcmp(child->name, "leftdock") == 0) {
-                left_dock = child;
-                x += child->rect.width;
-            }
-            if (strcmp(child->name, "rightdock") == 0) {
-                right_dock = child;
-            }
-
-            width -= child->rect.width;
         }
     }
 
     /* Second pass: Set the widths/heights */
+    int top = top_dock->rect.height;
+    int bottom = bottom_dock->rect.height;
+    int left = left_dock->rect.width;
+    int right = right_dock->rect.width;
+
     TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
 
         if (child == bottom_dock) {
             child->rect.x = con->rect.x;
-            child->rect.y = height + y;
+            child->rect.y = con->rect.height - bottom;
             child->rect.width = con->rect.width;
         } else if (child == top_dock) {
             child->rect.x = con->rect.x;
@@ -398,14 +392,14 @@ static void render_output(Con *con) {
             child->rect.y = con->rect.y;
             child->rect.height = con->rect.height;
         } else if (child == right_dock) {
-            child->rect.x = x + width;
+            child->rect.x = con->rect.width - right;
             child->rect.y = con->rect.y;
             child->rect.height = con->rect.height;
         } else if (child == content) {
-            child->rect.x = x;
-            child->rect.y = y;
-            child->rect.width = width;
-            child->rect.height = height;
+            child->rect.x = con->rect.x + left;
+            child->rect.y = con->rect.y + top;
+            child->rect.width = con->rect.width - left - right;
+            child->rect.height = con->rect.height - top - bottom;
         }
 
         DLOG("child at %s (%d, %d) with (%d x %d)\n",
