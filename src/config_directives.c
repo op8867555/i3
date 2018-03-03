@@ -443,6 +443,15 @@ CFGFUN(no_focus) {
     TAILQ_INSERT_TAIL(&assignments, assignment, assignments);
 }
 
+CFGFUN(reflow_docks, const char *mode) {
+    if (!strcmp(mode, "vertical"))
+        config.reflow_docks = REFLOW_V;
+    else if (!strcmp(mode, "horizontal"))
+        config.reflow_docks = REFLOW_H;
+    else
+        config.reflow_docks = NO_REFLOW;
+}
+
 /*******************************************************************************
  * Bar configuration (i3bar)
  ******************************************************************************/

@@ -55,6 +55,7 @@ state INITIAL:
       -> COLOR_SINGLE
   colorclass = 'client.focused_inactive', 'client.focused', 'client.unfocused', 'client.urgent', 'client.placeholder'
       -> COLOR_BORDER
+  'reflow_docks'                           -> REFLOW_DOCKS
 
 # We ignore comments and 'set' lines (variables).
 state IGNORE_LINE:
@@ -598,3 +599,8 @@ state BAR_COLORS_TEXT:
       -> call cfg_bar_color($colorclass, $border, $background, NULL); BAR_COLORS
   text = word
       -> call cfg_bar_color($colorclass, $border, $background, $text); BAR_COLORS
+
+# reflow_docks [vertical | horizontal | no]
+state REFLOW_DOCKS:
+  mode = 'vertical', 'horizontal', 'no'
+    -> call cfg_reflow_docks($mode)

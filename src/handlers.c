@@ -373,24 +373,36 @@ static void handle_configure_request(xcb_configure_request_event_t *event) {
 
     /* Dock windows can be reconfigured in their height/width and moved to another output. */
     if (con->parent && con->parent->is_docked) {
+        bool need_render = false;
         DLOG("Reconfiguring dock window (con = %p).\n", con);
-        if (con->parent->type == CT_HDOCKAREA &&
-                (event->value_mask & XCB_CONFIG_WINDOW_HEIGHT)) {
-            DLOG("Horizontal dock client wants to change height to %d, we can do that.\n", event->height);
-
+        if (config.reflow_docks != NO_REFLOW) {
+            if (con->parent->type == CT_HDOCKAREA &&
+                    (event->value_mask & XCB_CONFIG_WINDOW_HEIGHT)) {
+                DLOG("Horizontal dock client wants to change height to %d, we can do that.\n", event->height);
+                con->geometry.height = event->height;
+            } else if (con->parent->type == CT_VDOCKAREA &&
+                        (event->value_mask & XCB_CONFIG_WINDOW_WIDTH)) {
+                DLOG("Vertical dock client wants to change width to %d, we can do that.\n", event->width);
+                con->geometry.width = event->width;
+            }
+            need_render = true;
+        } else {
+            DLOG("Reconfiguring dock window (con = %p).\n", con);
             con->geometry.height = event->height;
-            tree_render();
-        } else if (con->parent->type == CT_VDOCKAREA &&
-                    (event->value_mask & XCB_CONFIG_WINDOW_WIDTH)) {
-            DLOG("Vertical dock client wants to change width to %d, we can do that.\n", event->width);
-
             con->geometry.width = event->width;
-            tree_render();
+            need_render = true;
         }
 
         if (event->value_mask & XCB_CONFIG_WINDOW_X || event->value_mask & XCB_CONFIG_WINDOW_Y) {
             int16_t x = event->value_mask & XCB_CONFIG_WINDOW_X ? event->x : (int16_t)con->geometry.x;
             int16_t y = event->value_mask & XCB_CONFIG_WINDOW_Y ? event->y : (int16_t)con->geometry.y;
+
+            if (config.reflow_docks == NO_REFLOW) {
+                DLOG("Non-reflowing dock client is requested to be moved to (%d, %d), moving it there.\n", x, y);
+                con->geometry.x = x;
+                con->geometry.y = y;
+                need_render = true;
+            }
 
             Con *current_output = con_get_output(con);
             Output *target = get_output_containing(x, y);
@@ -401,12 +413,14 @@ static void handle_configure_request(xcb_configure_request_event_t *event) {
                 DLOG("Dock client will be moved to container %p.\n", nc);
                 con_detach(con);
                 con_attach(con, nc, false);
-
-                tree_render();
-            } else {
+                need_render = true;
+            } else if (config.reflow_docks != NO_REFLOW) {
                 DLOG("Dock client will not be moved, we only support moving it to another output.\n");
             }
         }
+        if (need_render)
+            tree_render();
+
         fake_absolute_configure_notify(con);
         return;
     }

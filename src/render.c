@@ -360,13 +360,19 @@ static void render_output(Con *con) {
         if (child->type == CT_HDOCKAREA) {
             child->rect.height = 0;
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
-                child->rect.height = MAX(child->rect.height, dockchild->geometry.height);
+                if (config.reflow_docks == NO_REFLOW)
+                    child->rect.height = MAX(child->rect.height, dockchild->geometry.height);
+                else
+                    child->rect.height += dockchild->geometry.height;
             }
         } else if (child->type == CT_VDOCKAREA) {
             child->rect.width = 0;
 
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
-                child->rect.width = MAX(child->rect.width, dockchild->geometry.width);
+                if (config.reflow_docks == NO_REFLOW)
+                    child->rect.width = MAX(child->rect.width, dockchild->geometry.width);
+                else
+                    child->rect.width = dockchild->geometry.width;
             }
         }
     }
@@ -377,36 +383,62 @@ static void render_output(Con *con) {
     int left = left_dock->rect.width;
     int right = right_dock->rect.width;
 
+    if (bottom_dock) {
+        bottom_dock->rect.x = con->rect.x;
+        bottom_dock->rect.y = con->rect.height - bottom;
+        bottom_dock->rect.width = con->rect.width;
+    }
+
+    if (top_dock) {
+        top_dock->rect.x = con->rect.x;
+        top_dock->rect.y = con->rect.y;
+        top_dock->rect.width = con->rect.width;
+    }
+
+    if (left_dock) {
+        left_dock->rect.x = con->rect.x;
+        left_dock->rect.y = con->rect.y;
+        left_dock->rect.height = con->rect.height;
+    }
+    if (right_dock) {
+        right_dock->rect.x = con->rect.width - right;
+        right_dock->rect.y = con->rect.y;
+        right_dock->rect.height = con->rect.height;
+    }
+    if (content) {
+        content->rect.x = con->rect.x + left;
+        content->rect.y = con->rect.y + top;
+        content->rect.width = con->rect.width - left - right;
+        content->rect.height = con->rect.height - top - bottom;
+    }
+
+
+    if (config.reflow_docks == REFLOW_H) {
+        left_dock->rect.y = con->rect.y + top;
+        left_dock->rect.height = con->rect.height - bottom - top;
+        right_dock->rect.y = con->rect.y + top;
+        right_dock->rect.height = con->rect.height - bottom - top;
+    } else if (config.reflow_docks == REFLOW_V) {
+        top_dock->rect.x = con->rect.x + left;
+        top_dock->rect.width = con->rect.width - left - right;
+        bottom_dock->rect.x = con->rect.x + left;
+        bottom_dock->rect.width = con->rect.width - left - right;
+    }
+
+    // Raise and render childs and keeping content on the top.
     TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
-
-        if (child == bottom_dock) {
-            child->rect.x = con->rect.x;
-            child->rect.y = con->rect.height - bottom;
-            child->rect.width = con->rect.width;
-        } else if (child == top_dock) {
-            child->rect.x = con->rect.x;
-            child->rect.y = con->rect.y;
-            child->rect.width = con->rect.width;
-        } else if (child == left_dock) {
-            child->rect.x = con->rect.x;
-            child->rect.y = con->rect.y;
-            child->rect.height = con->rect.height;
-        } else if (child == right_dock) {
-            child->rect.x = con->rect.width - right;
-            child->rect.y = con->rect.y;
-            child->rect.height = con->rect.height;
-        } else if (child == content) {
-            child->rect.x = con->rect.x + left;
-            child->rect.y = con->rect.y + top;
-            child->rect.width = con->rect.width - left - right;
-            child->rect.height = con->rect.height - top - bottom;
-        }
-
+        if (child == content)
+            continue;
         DLOG("child at %s (%d, %d) with (%d x %d)\n",
                 child->name, child->rect.x, child->rect.y, child->rect.width, child->rect.height);
         x_raise_con(child);
         render_con(child, false);
     }
+    child = content;
+    DLOG("child at %s (%d, %d) with (%d x %d)\n",
+            child->name, child->rect.x, child->rect.y, child->rect.width, child->rect.height);
+    x_raise_con(child);
+    render_con(child, false);
 }
 
 static void render_con_split(Con *con, Con *child, render_params *p, int i) {
@@ -496,25 +528,37 @@ static void render_con_tabbed(Con *con, Con *child, render_params *p, int i) {
 static void render_con_hdockarea(Con *con, Con *child, render_params *p) {
     assert(con->layout == L_HDOCKAREA);
 
-    child->rect = child->geometry;
+    if (config.reflow_docks == NO_REFLOW) {
+        child->rect = child->geometry;
+    } else {
+        child->rect.x = p->x;
+        child->rect.y = p->y;
+        child->rect.width = p->rect.width;
+        child->rect.height = child->geometry.height;
+        p->y += child->rect.height;
+    }
 
     child->deco_rect.x = 0;
     child->deco_rect.y = 0;
     child->deco_rect.width = 0;
     child->deco_rect.height = 0;
-
-    p->y += child->rect.height;
 }
 
 static void render_con_vdockarea(Con *con, Con *child, render_params *p) {
     assert(con->layout == L_VDOCKAREA);
 
-    child->rect = child->geometry;
+    if (config.reflow_docks == NO_REFLOW) {
+        child->rect = child->geometry;
+    } else {
+        child->rect.x = p->x;
+        child->rect.y = p->y;
+        child->rect.height = p->rect.height;
+        child->rect.width = child->geometry.width;
+        p->x += child->rect.width;
+    }
 
     child->deco_rect.x = 0;
     child->deco_rect.y = 0;
     child->deco_rect.width = 0;
     child->deco_rect.height = 0;
-
-    p->x += child->rect.width;
 }

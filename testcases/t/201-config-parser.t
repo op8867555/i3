@@ -511,6 +511,7 @@ my $expected_all_tokens = "ERROR: CONFIG: Expected one of these tokens: <end>, '
         client.unfocused
         client.urgent
         client.placeholder
+        reflow_docks
     )) . "'\n";
 
 my $expected_end = <<'EOT';

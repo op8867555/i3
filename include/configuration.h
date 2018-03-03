@@ -247,6 +247,12 @@ struct Config {
 
     /* The number of currently parsed barconfigs */
     int number_barconfigs;
+
+    enum {
+        REFLOW_H,
+        REFLOW_V,
+        NO_REFLOW
+    } reflow_docks;
 };
 
 /**
