@@ -357,11 +357,15 @@ static void render_output(Con *con) {
     /* First pass: determine the height/weight of all CT_DOCKAREAs (the sum of
      * their children) and figure out how many pixels we have left for the rest */
     TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
+
+
         if (child->type == CT_HDOCKAREA) {
             child->rect.height = 0;
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
+                struct reservedpx reserved = dockchild->window->reserved;
+                uint height = MAX(reserved.top, reserved.bottom);
                 if (config.reflow_docks == NO_REFLOW)
-                    child->rect.height = MAX(child->rect.height, dockchild->geometry.height);
+                    child->rect.height = MAX(child->rect.height, height);
                 else
                     child->rect.height += dockchild->geometry.height;
             }
@@ -369,8 +373,10 @@ static void render_output(Con *con) {
             child->rect.width = 0;
 
             TAILQ_FOREACH(dockchild, &(child->nodes_head), nodes) {
+                struct reservedpx reserved = dockchild->window->reserved;
+                uint width = MAX(reserved.left, reserved.right);
                 if (config.reflow_docks == NO_REFLOW)
-                    child->rect.width = MAX(child->rect.width, dockchild->geometry.width);
+                    child->rect.width = MAX(child->rect.width, width);
                 else
                     child->rect.width = dockchild->geometry.width;
             }
@@ -425,7 +431,12 @@ static void render_output(Con *con) {
         bottom_dock->rect.width = con->rect.width - left - right;
     }
 
-    // Raise and render childs and keeping content on the top.
+    // Raise and render childs and keeping content on the bottom.
+    child = content;
+    DLOG("child at %s (%d, %d) with (%d x %d)\n",
+            child->name, child->rect.x, child->rect.y, child->rect.width, child->rect.height);
+    x_raise_con(child);
+    render_con(child, false);
     TAILQ_FOREACH(child, &(con->nodes_head), nodes) {
         if (child == content)
             continue;
@@ -434,11 +445,6 @@ static void render_output(Con *con) {
         x_raise_con(child);
         render_con(child, false);
     }
-    child = content;
-    DLOG("child at %s (%d, %d) with (%d x %d)\n",
-            child->name, child->rect.x, child->rect.y, child->rect.width, child->rect.height);
-    x_raise_con(child);
-    render_con(child, false);
 }
 
 static void render_con_split(Con *con, Con *child, render_params *p, int i) {
